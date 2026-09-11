@@ -1,12 +1,19 @@
 ---
-name: "An Li"
+name: bbb
 status: current
 group: Students
-role: "PhD Student"
+role: PhD Student
+title: ''
 headshot: ../../assets/people/a-li.jpg
 links:
-  email: an.li@imu.edu.cn
+  email: bbb@imu.edu.cn
+  website: ''
+  scholar: ''
+  orcid: ''
+  twitter: ''
+  linkedin: ''
 order: 1
+featured: false
 ---
 
 An Li develops robust vision models and evaluates their behavior under adaptive adversarial attacks.
