@@ -15,7 +15,7 @@ display_url: https://baibaoo.github.io
 logo_url: https://baibaoo.github.io/favicon.svg
 
 media_folder: src/assets/uploads
-public_folder: ../../assets/uploads
+public_folder: /src/assets/uploads
 
 collections:
   - name: people
@@ -27,7 +27,7 @@ collections:
     extension: md
     format: frontmatter
     media_folder: src/assets/people
-    public_folder: ../../assets/people
+    public_folder: /src/assets/people
     fields:
       - { label: 姓名, name: name, widget: string }
       - label: 状态
@@ -110,7 +110,7 @@ collections:
     extension: md
     format: frontmatter
     media_folder: src/assets/figures
-    public_folder: ../../assets/figures
+    public_folder: /src/assets/figures
     fields:
       - { label: 图片, name: image, widget: image, choose_url: false }
       - label: 对应论文
@@ -146,7 +146,7 @@ collections:
     extension: md
     format: frontmatter
     media_folder: src/assets/gallery
-    public_folder: ../../assets/gallery
+    public_folder: /src/assets/gallery
     fields:
       - { label: 照片, name: image, widget: image, choose_url: false }
       - { label: 说明, name: caption, widget: string }
