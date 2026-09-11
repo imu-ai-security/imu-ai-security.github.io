@@ -4,7 +4,7 @@ import { z } from "zod";
 import research from "./data/research.json";
 
 const emptyToUndefined = (value: unknown) =>
-  typeof value === "string" && value.trim() === "" ? undefined : value;
+  value == null || (typeof value === "string" && value.trim() === "") ? undefined : value;
 
 // CMS editors commonly persist untouched optional URL fields as empty strings.
 // Treat those as "not provided" instead of failing the production build.
@@ -38,16 +38,19 @@ const people = defineCollection({
       role: z.string(),
       title: z.string().optional(),
       headshot: image().optional(),
-      links: z
-        .object({
-          email: optionalEmail,
-          twitter: optionalUrl,
-          scholar: optionalUrl,
-          orcid: optionalUrl,
-          linkedin: optionalUrl,
-          website: optionalUrl,
-        })
-        .default({}),
+      links: z.preprocess(
+        emptyToUndefined,
+        z
+          .object({
+            email: optionalEmail,
+            twitter: optionalUrl,
+            scholar: optionalUrl,
+            orcid: optionalUrl,
+            linkedin: optionalUrl,
+            website: optionalUrl,
+          })
+          .default({}),
+      ),
       order: z.number().default(0),
       featured: z.boolean().default(false),
     }),
