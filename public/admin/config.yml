@@ -8,7 +8,7 @@ backend:
   name: github
   repo: baibaoo/baibaoo.github.io
   branch: main
-  base_url: https://REPLACE_WITH_YOUR_OAUTH_WORKER.workers.dev
+  base_url: https://baibaoo-cms-auth.mw04220603.workers.dev
 
 site_url: https://baibaoo.github.io
 display_url: https://baibaoo.github.io
