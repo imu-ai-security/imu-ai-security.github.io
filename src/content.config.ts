@@ -3,6 +3,14 @@ import { glob } from "astro/loaders";
 import { z } from "zod";
 import research from "./data/research.json";
 
+const emptyToUndefined = (value: unknown) =>
+  typeof value === "string" && value.trim() === "" ? undefined : value;
+
+// CMS editors commonly persist untouched optional URL fields as empty strings.
+// Treat those as "not provided" instead of failing the production build.
+const optionalUrl = z.preprocess(emptyToUndefined, z.url().optional());
+const optionalEmail = z.preprocess(emptyToUndefined, z.email().optional());
+
 /*
   Content collections for the lab site (Astro 6 Content Layer API).
 
@@ -32,12 +40,12 @@ const people = defineCollection({
       headshot: image().optional(),
       links: z
         .object({
-          email: z.email().optional(),
-          twitter: z.url().optional(),
-          scholar: z.url().optional(),
-          orcid: z.url().optional(),
-          linkedin: z.url().optional(),
-          website: z.url().optional(),
+          email: optionalEmail,
+          twitter: optionalUrl,
+          scholar: optionalUrl,
+          orcid: optionalUrl,
+          linkedin: optionalUrl,
+          website: optionalUrl,
         })
         .default({}),
       order: z.number().default(0),
@@ -56,8 +64,8 @@ const publications = defineCollection({
     doi: z.string().optional(),
     pmid: z.string().optional(),
     pmcid: z.string().optional(),
-    url: z.url().optional(),
-    scholarUrl: z.url().optional(),
+    url: optionalUrl,
+    scholarUrl: optionalUrl,
     citations: z.number().optional(),
     isMenteePaper: z.boolean().default(false),
     menteeFirstAuthor: z.boolean().default(false),
@@ -89,7 +97,7 @@ const figures = defineCollection({
         "publisher-permission",
         "unknown",
       ]),
-      licenseUrl: z.url().optional(),
+      licenseUrl: optionalUrl,
       // Hard gate: only true figures are ever rendered.
       rightsConfirmed: z.boolean().default(false),
       order: z.number().default(0),
