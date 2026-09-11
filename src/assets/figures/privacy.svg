@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Privacy budget and utility tradeoff">
+  <rect width="960" height="540" fill="#f8fafc"/><rect x="80" y="45" width="825" height="420" rx="12" fill="#fff" stroke="#cbd5e1"/><text x="110" y="88" font-family="Arial" font-size="24" fill="#0f172a">Privacy budget and model utility</text>
+  <path d="M135 410H850M135 330H850M135 250H850M135 170H850M135 90V410" stroke="#cbd5e1"/><path d="M135 120C260 145 335 190 430 245S650 340 835 390" fill="none" stroke="#7c3aed" stroke-width="7"/><circle cx="135" cy="120" r="8" fill="#7c3aed"/><circle cx="835" cy="390" r="8" fill="#7c3aed"/><text x="140" y="448" font-family="Arial" font-size="18" fill="#475569">Privacy budget (epsilon)</text><text x="20" y="120" font-family="Arial" font-size="18" fill="#475569" transform="rotate(-90 20 120)">Utility</text>
+</svg>

@@ -1,0 +1,256 @@
+---
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+import type { Publication } from "../lib/content";
+import { authorIsPerson, personKey, menteeMatcher } from "../lib/content";
+// Author markers: ** = mentee (derived from lab membership, see menteeMatcher)
+// and * = co-first/-senior author (from the CV, scripts/data, by DOI/title).
+import cvPubs from "../../scripts/data/cv-publications.json";
+import authorOverrides from "../../scripts/data/author-overrides.json";
+
+interface Props {
+  pubs: Publication[];
+}
+const { pubs } = Astro.props;
+
+const norm = (s: string) =>
+  s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+
+// Co-first/-senior (*) author name sets from the CV, keyed by DOI then title.
+const starByDoi = new Map<string, Set<string>>();
+const starByTitle = new Map<string, Set<string>>();
+for (const rec of cvPubs as any[]) {
+  const star = new Set<string>(
+    rec.authors.filter((a: any) => a.coFirstSenior).map((a: any) => a.name),
+  );
+  if (rec.doi) starByDoi.set(rec.doi.toLowerCase(), star);
+  if (rec.title) starByTitle.set(norm(rec.title), star);
+}
+// Merge manual corrections (scripts/data/author-overrides.json) by DOI.
+for (const [doi, ov] of Object.entries(authorOverrides as Record<string, any>)) {
+  if (doi.startsWith("_")) continue;
+  const set = starByDoi.get(doi.toLowerCase()) ?? new Set<string>();
+  for (const n of ov.coFirstSenior ?? []) set.add(n);
+  starByDoi.set(doi.toLowerCase(), set);
+}
+const starsFor = (p: Publication): Set<string> =>
+  (p.data.doi && starByDoi.get(p.data.doi.toLowerCase())) ||
+  starByTitle.get(norm(p.data.title)) ||
+  new Set<string>();
+
+// Directory of lab people, for linking author names + mentee headshots.
+const people = await getCollection("people");
+const dir = people.map((p) => ({
+  slug: p.id,
+  name: p.data.name,
+  headshot: p.data.headshot,
+  key: personKey(p.data.name),
+}));
+const findPerson = (author: string) =>
+  dir.find((d) => authorIsPerson(author, d.key)) ?? null;
+const isMentee = menteeMatcher(people);
+
+// Headshots for every lab member on a paper (in the people collection, with a
+// headshot), in author order — including the PI on any paper he co-authored.
+const labPeopleFor = (p: Publication) => {
+  const seen = new Set<string>();
+  const out: typeof dir = [];
+  for (const a of p.data.authors) {
+    const d = findPerson(a);
+    if (!d || !d.headshot || seen.has(d.slug)) continue;
+    seen.add(d.slug);
+    out.push(d);
+  }
+  return out;
+};
+
+const shortName = (name: string) => name.split(",")[0].trim();
+const anyMarks = pubs.some((p) => starsFor(p).size > 0);
+---
+
+<ol class="divide-y divide-slate-100" id="pub-list">
+  {
+    pubs.map((p) => {
+      const d = p.data;
+      const link = d.doi ? `https://doi.org/${d.doi}` : d.url;
+      const search = `${d.title} ${d.authors.join(" ")} ${d.journal ?? ""}`.toLowerCase();
+      const stars = starsFor(p);
+      const menteeLed = isMentee(d.authors[0] ?? "");
+      const featured = menteeLed || (d.piFirstOrSenior && d.year >= 2019);
+      const labPeople = labPeopleFor(p);
+      // Collaboration unless the PI is the SOLE first or SOLE last author —
+      // co-first / co-last (he shares the lead) and middle authorship all count.
+      const piAt = (a: string) => ["l-zhang", "w-li", "m-wang"].includes(findPerson(a)?.slug ?? "");
+      const piStar = d.authors.some((a) => piAt(a) && stars.has(a));
+      const soleFirst = piAt(d.authors[0] ?? "") && !piStar;
+      const soleLast = piAt(d.authors[d.authors.length - 1] ?? "") && !piStar;
+      const collaboration = !soleFirst && !soleLast;
+      return (
+        <li
+          class="py-5"
+          data-pub
+          data-year={d.year}
+          data-citations={typeof d.citations === "number" ? d.citations : -1}
+          data-featured={featured}
+          data-mentee={menteeLed}
+          data-pi-senior={d.piFirstOrSenior}
+          data-collaboration={collaboration}
+          data-openaccess={d.openAccess}
+          data-areas={d.areas.join(" ")}
+          data-search={search}
+        >
+          <p class="font-medium text-slate-900">
+            {link ? (
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-primary-700 hover:underline"
+              >
+                {d.title}
+              </a>
+            ) : (
+              d.title
+            )}
+          </p>
+
+          <p class="mt-1 text-sm text-slate-600">
+            <span class:list={["authors", d.authors.length > 14 && "clamped"]}>
+              {d.authors.map((a, i) => {
+                const person = findPerson(a);
+                // Only a co-first/-senior (*) marker. Mentees are conveyed by
+                // bolded name links + headshots, so they get no marker.
+                const mark = stars.has(a) ? "*" : "";
+                return (
+                  <span class="au">
+                    {i > 0 && ", "}
+                    {person ? (
+                      <a
+                        href={`/people/${person.slug}`}
+                        class="font-medium text-slate-900 hover:text-primary-700 hover:underline"
+                      >
+                        {a}
+                      </a>
+                    ) : (
+                      a
+                    )}
+                    {mark && <sup class="font-semibold text-slate-600">{mark}</sup>}
+                  </span>
+                );
+              })}
+            </span>
+            {d.authors.length > 14 && (
+              <button
+                type="button"
+                data-authors-toggle
+                data-more={`… +${d.authors.length - 12} more`}
+                class="ml-1 whitespace-nowrap text-primary-700 hover:underline"
+              >
+                … +{d.authors.length - 12} more
+              </button>
+            )}
+          </p>
+
+          <p class="mt-0.5 text-sm text-slate-600">
+            {d.journal && <em>{d.journal}</em>}
+            {d.journal && " · "}
+            {d.year}
+          </p>
+
+          {labPeople.length > 0 && (
+            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              {labPeople.map((m) => (
+                <a
+                  href={`/people/${m.slug}`}
+                  class="group flex items-center gap-2"
+                  title={m.name}
+                >
+                  {m.headshot && (
+                    <Image
+                      src={m.headshot}
+                      alt={m.name}
+                      width={64}
+                      height={64}
+                      class="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 group-hover:ring-primary-300"
+                    />
+                  )}
+                  <span class="text-xs text-slate-600 group-hover:text-primary-700">
+                    {shortName(m.name)}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            {typeof d.citations === "number" && (
+              <span class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800">
+                Cited by {d.citations}
+              </span>
+            )}
+            {menteeLed && (
+              <span class="rounded-full bg-accent-100 px-2 py-0.5 font-medium text-accent-700">
+                Mentee-led
+              </span>
+            )}
+            {d.piFirstOrSenior && (
+              <span class="rounded-full bg-primary-100 px-2 py-0.5 font-medium text-primary-700">
+                PI first/senior
+              </span>
+            )}
+            {collaboration && (
+              <span class="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600">
+                Collaboration
+              </span>
+            )}
+            {d.openAccess && (
+              <span class="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700">
+                Open access
+              </span>
+            )}
+            {d.doi && (
+              <a
+                href={`https://doi.org/${d.doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary-700 hover:underline"
+              >
+                DOI
+              </a>
+            )}
+            {d.scholarUrl && (
+              <a
+                href={d.scholarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary-700 hover:underline"
+              >
+                Scholar
+              </a>
+            )}
+          </div>
+        </li>
+      );
+    })
+  }
+</ol>
+
+{
+  anyMarks && (
+    <p class="mt-4 text-xs text-slate-600">
+      <sup class="font-semibold text-slate-600">*</sup> co-first / co-senior author
+    </p>
+  )
+}
+
+<script>
+  // Expand/collapse clamped author lists.
+  document.querySelectorAll<HTMLButtonElement>("[data-authors-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const authors = btn.parentElement?.querySelector(".authors");
+      if (!authors) return;
+      const clamped = authors.classList.toggle("clamped");
+      btn.textContent = clamped ? (btn.dataset.more ?? "more") : "show fewer";
+    });
+  });
+</script>

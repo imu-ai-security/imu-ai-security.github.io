@@ -1,0 +1,228 @@
+# Sveltia CMS configuration for the lab website.
+#
+# Replace the two placeholders below after the GitHub repository and OAuth
+# helper are ready:
+#   repo: <owner>/<repo>
+#   base_url: https://<your-worker>.workers.dev
+backend:
+  name: github
+  repo: baibaoo/baibaoo.github.io
+  branch: main
+  base_url: https://REPLACE_WITH_YOUR_OAUTH_WORKER.workers.dev
+
+site_url: https://baibaoo.github.io
+display_url: https://baibaoo.github.io
+logo_url: https://baibaoo.github.io/favicon.svg
+
+media_folder: src/assets/uploads
+public_folder: ../../assets/uploads
+
+collections:
+  - name: people
+    label: Team
+    label_singular: Member
+    folder: src/content/people
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    media_folder: src/assets/people
+    public_folder: ../../assets/people
+    fields:
+      - { label: 姓名, name: name, widget: string }
+      - label: 状态
+        name: status
+        widget: select
+        default: current
+        options:
+          - { label: 当前成员, value: current }
+          - { label: 校友, value: alumni }
+      - label: 分组
+        name: group
+        widget: select
+        default: Students
+        options: [Faculty, Researchers, Staff, Students, Affiliates, Alumni]
+      - { label: 职位, name: role, widget: string }
+      - { label: 头衔（可选）, name: title, widget: string, required: false }
+      - { label: 头像, name: headshot, widget: image, required: false, choose_url: false }
+      - label: 个人主页与联系方式
+        name: links
+        widget: object
+        required: false
+        fields:
+          - { label: Email, name: email, widget: string, required: false }
+          - { label: 个人主页, name: website, widget: string, required: false }
+          - { label: Google Scholar, name: scholar, widget: string, required: false }
+          - { label: ORCID, name: orcid, widget: string, required: false }
+          - { label: Twitter / X, name: twitter, widget: string, required: false }
+          - { label: LinkedIn, name: linkedin, widget: string, required: false }
+      - { label: 排序, name: order, widget: number, default: 0 }
+      - { label: 首页推荐, name: featured, widget: boolean, default: false }
+      - { label: 个人简介, name: body, widget: markdown }
+
+  - name: publications
+    label: Publications
+    label_singular: Publication
+    folder: src/content/publications
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    fields:
+      - { label: 论文标题, name: title, widget: string }
+      - label: 作者
+        name: authors
+        widget: list
+        field: { label: 作者, name: author, widget: string }
+      - { label: 年份, name: year, widget: number }
+      - { label: 期刊或会议, name: journal, widget: string, required: false }
+      - { label: DOI, name: doi, widget: string, required: false }
+      - { label: PubMed ID, name: pmid, widget: string, required: false }
+      - { label: PMC ID, name: pmcid, widget: string, required: false }
+      - { label: 论文链接, name: url, widget: string, required: false }
+      - { label: Google Scholar 链接, name: scholarUrl, widget: string, required: false }
+      - { label: 引用次数, name: citations, widget: number, required: false }
+      - { label: 学生主导论文, name: isMenteePaper, widget: boolean, default: false }
+      - { label: 学生第一作者, name: menteeFirstAuthor, widget: boolean, default: false }
+      - { label: PI 第一或通讯作者, name: piFirstOrSenior, widget: boolean, default: false }
+      - { label: 首页推荐, name: featured, widget: boolean, default: false }
+      - { label: 开放获取, name: openAccess, widget: boolean, default: false }
+      - label: 研究方向
+        name: areas
+        widget: select
+        multiple: true
+        default: []
+        options:
+          - { label: Adversarial machine learning, value: adversarial-ml }
+          - { label: Privacy-preserving AI, value: privacy-preserving-ai }
+          - { label: Secure and aligned LLMs, value: secure-llm }
+          - { label: Security evaluation methods, value: methods }
+          - { label: Trusted systems and applications, value: systems }
+          - { label: Review, value: review }
+          - { label: Letter / commentary, value: letter }
+
+  - name: figures
+    label: Figures
+    label_singular: Figure
+    folder: src/content/figures
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    media_folder: src/assets/figures
+    public_folder: ../../assets/figures
+    fields:
+      - { label: 图片, name: image, widget: image, choose_url: false }
+      - label: 对应论文
+        name: paper
+        widget: relation
+        collection: publications
+        search_fields: [title]
+        value_field: "{{slug}}"
+        display_fields: [title]
+      - { label: 图注, name: caption, widget: text }
+      - { label: 引用信息, name: citation, widget: string }
+      - { label: DOI, name: doi, widget: string, required: false }
+      - { label: PubMed ID, name: pmid, widget: string, required: false }
+      - { label: 期刊, name: journal, widget: string, required: false }
+      - label: 授权类型
+        name: license
+        widget: select
+        options: [CC-BY, CC-BY-SA, CC0, publisher-permission, unknown]
+      - { label: 授权链接, name: licenseUrl, widget: string, required: false }
+      - label: 已确认图片使用权
+        name: rightsConfirmed
+        widget: boolean
+        default: false
+        hint: 只有确认拥有使用权的图表才会显示在公开页面。
+      - { label: 排序, name: order, widget: number, default: 0 }
+
+  - name: gallery
+    label: Lab Life
+    label_singular: Lab Life Photo
+    folder: src/content/gallery
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    media_folder: src/assets/gallery
+    public_folder: ../../assets/gallery
+    fields:
+      - { label: 照片, name: image, widget: image, choose_url: false }
+      - { label: 说明, name: caption, widget: string }
+      - { label: 日期, name: date, widget: datetime, date_format: "YYYY-MM-DD", time_format: false }
+      - label: 出镜成员
+        name: people
+        widget: list
+        required: false
+        field: { label: 成员, name: member, widget: string }
+      - { label: 首页或精选, name: featured, widget: boolean, default: false }
+
+  - name: research
+    label: Research
+    files:
+      - name: research
+        label: Research areas
+        file: src/data/research.json
+        format: json
+        fields:
+          - label: Research page groups
+            name: researchGroups
+            widget: list
+            fields:
+              - { label: 标题, name: title, widget: string }
+              - { label: 排序, name: order, widget: number }
+          - label: Publication filter groups
+            name: filterGroups
+            widget: list
+            fields:
+              - { label: 标题, name: title, widget: string }
+              - { label: 排序, name: order, widget: number }
+          - label: Areas
+            name: areas
+            widget: list
+            fields:
+              - { label: Slug, name: slug, widget: string, hint: 已使用的 slug 不建议修改，否则论文标签会失效。 }
+              - { label: 名称, name: label, widget: string }
+              - { label: 简介, name: blurb, widget: text }
+              - { label: Research 页面分组, name: researchGroup, widget: string, required: false }
+              - { label: 筛选分组, name: filterGroup, widget: string }
+              - { label: 显示在 Research 页面, name: onResearch, widget: boolean, default: true }
+              - { label: 排序, name: order, widget: number }
+
+  - name: settings
+    label: Website Settings
+    files:
+      - name: site
+        label: Contact and identity
+        file: src/data/site.json
+        format: json
+        fields:
+          - { label: 实验室名称, name: name, widget: string }
+          - { label: 简称, name: shortName, widget: string }
+          - { label: PI, name: pi, widget: string }
+          - { label: 学院/部门, name: institution, widget: string }
+          - { label: 学校, name: university, widget: string }
+          - { label: 网站正式地址, name: url, widget: string }
+          - { label: 网站简介, name: description, widget: text }
+          - { label: 邮箱, name: email, widget: string }
+          - { label: 电话, name: phone, widget: string }
+          - label: 地址
+            name: address
+            widget: list
+            field: { label: 地址行, name: line, widget: string }
+          - { label: 地图搜索内容, name: mapQuery, widget: string }
+          - label: 社交链接
+            name: social
+            widget: object
+            required: false
+            fields:
+              - { label: Google Scholar, name: scholar, widget: string, required: false }
+              - { label: Twitter / X, name: twitter, widget: string, required: false }
+              - { label: GitHub, name: github, widget: string, required: false }
+          - label: 导航菜单
+            name: nav
+            widget: list
+            fields:
+              - { label: 名称, name: label, widget: string }
+              - { label: 链接, name: href, widget: string }

@@ -1,0 +1,51 @@
+---
+import { site } from "../data/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Absolute-from-root path to a social image (e.g. "/icon-512.png"). */
+  image?: string;
+}
+
+const {
+  title,
+  description = site.description,
+  image = "/icon-512.png",
+} = Astro.props;
+
+const pageTitle = title ? `${title} · ${site.shortName}` : site.name;
+const base = Astro.site ?? new URL(site.url);
+const canonical = new URL(Astro.url.pathname, base).href;
+const ogImage = new URL(image, base).href;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="theme-color" content="#7f3a2f" />
+
+<!-- If you change the favicon later, append ?v=2 (then ?v=3 …) to these URLs to
+     force browsers to re-fetch it past their sticky favicon cache. -->
+<link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />

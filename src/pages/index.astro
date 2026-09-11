@@ -1,0 +1,250 @@
+---
+import { Image } from "astro:assets";
+import BaseLayout from "../components/BaseLayout.astro";
+import { site } from "../data/site";
+import { getCollection } from "astro:content";
+import {
+  getConfirmedFigures,
+  getPublications,
+  featuredMatcher,
+  featuredSorter,
+} from "../lib/content";
+import PubList from "../components/PubList.astro";
+import labPhoto from "../assets/gallery/lab-life-1.jpg";
+
+const figures = await getConfirmedFigures();
+
+const people = await getCollection("people");
+const pubs = await getPublications();
+// Featured = mentee-led or PI first/senior (>=2019), prioritized mentee-led
+// first then most recent.
+const recent = pubs
+  .filter(featuredMatcher(people))
+  .sort(featuredSorter(people))
+  .slice(0, 5);
+
+// "From our work" strip: the most-prominent (lowest-order) figure from each of
+// the top three papers, so the strip showcases range rather than repeating one
+// article. Each figure carries its paper's title + journal as the caption.
+const pubById = new Map(pubs.map((p) => [p.id, p]));
+type StripItem = {
+  figure: (typeof figures)[number];
+  paper: (typeof pubs)[number] | undefined;
+};
+const strip: StripItem[] = [];
+const seenPapers = new Set<string>();
+for (const f of figures) {
+  const pid = f.data.paper.id;
+  if (seenPapers.has(pid)) continue;
+  seenPapers.add(pid);
+  strip.push({ figure: f, paper: pubById.get(pid) });
+  if (strip.length === 3) break;
+}
+
+// Homepage "Research areas" cards. Replace these with your lab's themes; each
+// `href` can deep-link into the Research page's grouped sections (e.g.
+// "/research#your-slug" once you set up the taxonomy in content.config.ts).
+const themes = [
+  {
+    title: "Adversarial machine learning",
+    href: "/research#adversarial-ml",
+    body: "Robust models that withstand malicious perturbations and distribution shifts.",
+  },
+  {
+    title: "Privacy-preserving AI",
+    href: "/research#privacy-preserving-ai",
+    body: "Balancing useful data access with strong privacy guarantees.",
+  },
+  {
+    title: "Secure and aligned LLMs",
+    href: "/research#secure-llm",
+    body: "Making generative models safer, more controllable, and more reliable.",
+  },
+  {
+    title: "Trusted systems and applications",
+    href: "/research",
+    body: "Translating research into deployable systems and open-source tools.",
+  },
+];
+---
+
+<BaseLayout>
+  <!-- Hero -->
+  <section style="background-image: linear-gradient(to bottom, var(--color-primary-700) 0%, var(--color-primary-700) 38%, var(--color-primary-400) 72%, white 100%)">
+    <div class="container-page py-16 sm:py-20">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="text-sm font-semibold tracking-wide text-primary-100 uppercase">
+          {site.institution} · {site.university}
+        </p>
+        <h1
+          class="mt-4 text-4xl leading-tight font-semibold text-white sm:text-5xl"
+        >
+          {site.name}
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-lg text-primary-50">{site.description}</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <a
+            href="/research"
+            class="rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50"
+            >Explore our research</a
+          >
+          <a
+            href="/people"
+            class="rounded-md border border-white/40 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+            >Meet the team</a
+          >
+        </div>
+      </div>
+      {/* Want a custom illustrated hero? src/components/PipelineHero.astro is a
+          worked example (the Cohen Lab's bedside-to-bedside pipeline). Drop it in
+          here, or ask Claude to generate an SVG hero motif for your own field. */}
+    </div>
+  </section>
+
+  <!-- Featured figures strip -->
+  {
+    strip.length > 0 && (
+      <section class="border-y border-slate-200 bg-slate-50">
+        <div class="container-page py-14">
+          <div class="mb-7 flex items-end justify-between gap-4">
+            <div>
+              <div class="mb-3 h-0.5 w-10 rounded-full bg-accent-500" />
+              <h2 class="font-serif text-2xl text-slate-900">From our work</h2>
+            </div>
+            <a
+              href="/figures"
+              class="group inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary-700 transition-colors hover:text-accent-600"
+            >
+              All figures
+              <span
+                class="transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              >
+                &rarr;
+              </span>
+            </a>
+          </div>
+          <div class="grid gap-5 sm:grid-cols-3">
+            {strip.map(({ figure, paper }) => (
+              <a
+                href="/figures"
+                class="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md"
+              >
+                <div class="overflow-hidden bg-slate-50">
+                  <Image
+                    src={figure.data.image}
+                    alt={figure.data.caption}
+                    widths={[400, 800]}
+                    sizes="(min-width: 640px) 30vw, 90vw"
+                    class="aspect-[4/3] w-full object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                  />
+                </div>
+                <div class="flex flex-1 flex-col border-t border-slate-100 p-4">
+                  {paper && (
+                    <p class="text-xs font-medium text-slate-600">
+                      {paper.data.journal && <span>{paper.data.journal}</span>}
+                      {paper.data.journal && " · "}
+                      {paper.data.year}
+                    </p>
+                  )}
+                  <h3 class="mt-1 line-clamp-3 font-serif text-base leading-snug text-slate-900 group-hover:text-primary-700">
+                    {paper ? paper.data.title : figure.data.caption}
+                  </h3>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Research themes -->
+  <section class="container-page py-16">
+    <div class="mb-3 h-0.5 w-10 rounded-full bg-accent-500"></div>
+    <h2 class="mb-8 font-serif text-2xl text-slate-900">Research areas</h2>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        themes.map((t) => (
+          <a
+            href={t.href}
+            class="group rounded-xl border border-slate-200 p-6 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+          >
+            <h3 class="font-serif text-xl text-slate-900 group-hover:text-primary-700">
+              {t.title}
+            </h3>
+            <p class="mt-2 text-sm text-slate-600">{t.body}</p>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Recent featured publications -->
+  {
+    recent.length > 0 && (
+      <section class="border-t border-slate-200 bg-slate-50">
+        <div class="container-page py-16">
+          <div class="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <div class="mb-3 h-0.5 w-10 rounded-full bg-accent-500" />
+              <h2 class="font-serif text-2xl text-slate-900">Recent work</h2>
+            </div>
+            <a
+              href="/publications"
+              class="group inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary-700 transition-colors hover:text-accent-600"
+            >
+              All publications
+              <span
+                class="transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              >
+                &rarr;
+              </span>
+            </a>
+          </div>
+          <PubList pubs={recent} />
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Life in the lab -->
+  <section class="border-t border-slate-200 bg-white">
+    <div class="container-page py-16">
+      <div class="grid items-center gap-10 lg:grid-cols-2">
+        <div>
+          <div class="mb-3 h-0.5 w-10 rounded-full bg-accent-500"></div>
+          <h2 class="font-serif text-2xl text-slate-900">Life in the lab</h2>
+          <p class="mt-4 max-w-prose text-slate-600">
+            Science is a team sport. Beyond the bench, we celebrate milestones,
+            travel to conferences, and get out together. Add your own photos in
+            <code>src/content/gallery/</code>.
+          </p>
+          <a
+            href="/lab-life"
+            class="group mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary-700 transition-colors hover:text-accent-600"
+          >
+            Explore lab life
+            <span
+              class="transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true">&rarr;</span
+            >
+          </a>
+        </div>
+        <a
+          href="/lab-life"
+          class="group block overflow-hidden rounded-2xl border border-slate-200 shadow-sm"
+        >
+          <Image
+            src={labPhoto}
+            alt="Lab team photo"
+            widths={[600, 1000]}
+            sizes="(min-width: 1024px) 45vw, 90vw"
+            class="aspect-[16/9] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          />
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

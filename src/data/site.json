@@ -1,0 +1,29 @@
+{
+  "name": "IMU AI Security",
+  "shortName": "IMU AI Security",
+  "pi": "Lan Zhang, PhD",
+  "institution": "School of Computer Science",
+  "university": "Inner Mongolia University",
+  "url": "https://baibaoo.github.io",
+  "description": "We develop trustworthy, explainable, and deployable AI security methods for reliable intelligent systems.",
+  "email": "ai-security@imu.edu.cn",
+  "phone": "0471-4992000",
+  "address": [
+    "IMU AI Security",
+    "235 University West Street, Hohhot, Inner Mongolia",
+    "School of Computer Science, Inner Mongolia University"
+  ],
+  "mapQuery": "Inner Mongolia University Saihan Campus",
+  "social": {
+    "scholar": "https://scholar.google.com/",
+    "github": "https://github.com/imu-ai-security"
+  },
+  "nav": [
+    { "label": "Team", "href": "/people" },
+    { "label": "Research", "href": "/research" },
+    { "label": "Publications", "href": "/publications" },
+    { "label": "Figures", "href": "/figures" },
+    { "label": "Lab Life", "href": "/lab-life" },
+    { "label": "Contact", "href": "/contact" }
+  ]
+}

@@ -1,0 +1,207 @@
+---
+import BaseLayout from "../components/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import PubList from "../components/PubList.astro";
+import { getPublications, getAreaCounts, AREA_LABELS, FILTER_GROUPS } from "../lib/content";
+
+const pubs = await getPublications();
+const areaCounts = await getAreaCounts();
+const areaChips = FILTER_GROUPS.flatMap((g) => g.slugs);
+
+const chip =
+  "rounded-full border border-slate-300 px-3 py-1 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 data-[active]:border-primary-600 data-[active]:bg-primary-600 data-[active]:text-white";
+
+const filters = [
+  { key: "all", label: "All" },
+  { key: "mentee", label: "Mentee-led" },
+  { key: "pi", label: "PI first/senior" },
+  { key: "collaboration", label: "Collaboration" },
+  { key: "openaccess", label: "Open access" },
+];
+---
+
+<BaseLayout
+  title="Publications"
+  description="Peer-reviewed publications from the lab. Filter by role or research area, sort by date or citations."
+>
+  <PageHeader
+    eyebrow="Research output"
+    title="Publications"
+    lead="Peer-reviewed work from the lab and its collaborators. Filter by role or by research area, sort by date or citation count; counts are from Google Scholar."
+  />
+  <div class="container-page py-12">
+    <div class="mb-8 space-y-3">
+      <button
+        type="button"
+        id="filters-toggle"
+        class="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 md:hidden"
+        aria-controls="pub-filters"
+        aria-expanded="false"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h18M6 12h12M10 19h4" />
+        </svg>
+        Filters
+      </button>
+
+      <div id="pub-filters" class="hidden space-y-3 md:block">
+        <div class="flex flex-wrap items-center gap-2">
+          {
+            filters.map((f) => (
+              <button class={chip} data-filter={f.key} data-active={f.key === "all" ? "" : undefined}>
+                {f.label} <span data-count />
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="mr-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">Area</span>
+        <button class={chip} data-area="all" data-active>All areas</button>
+        {
+          areaChips.map((slug) => (
+            <button class={chip} data-area={slug}>
+              {AREA_LABELS[slug]}{" "}
+              <span class="opacity-70">({areaCounts[slug] ?? 0})</span>
+            </button>
+          ))
+        }
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          id="pub-search"
+          placeholder="Search title or author…"
+          class="min-w-56 flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none"
+        />
+        <div class="flex items-center gap-2 text-sm text-slate-600">
+          <span>Sort</span>
+          <button class={chip} data-sort="date" data-active>Newest</button>
+          <button class={chip} data-sort="citations">Most cited</button>
+        </div>
+        <span id="pub-count" class="text-sm text-slate-600"></span>
+      </div>
+    </div>
+
+    <PubList pubs={pubs} />
+
+    <p id="pub-empty" class="hidden py-10 text-center text-slate-600">
+      No publications match your filters.
+    </p>
+  </div>
+
+  <script>
+    const list = document.getElementById("pub-list");
+    const items = list
+      ? ([...list.querySelectorAll<HTMLElement>("[data-pub]")] as HTMLElement[])
+      : [];
+    const search = document.getElementById("pub-search") as HTMLInputElement | null;
+    const countEl = document.getElementById("pub-count");
+    const emptyEl = document.getElementById("pub-empty");
+    // Mobile: toggle the (collapsed) filter panel.
+    const filtersToggle = document.getElementById("filters-toggle");
+    const filtersPanel = document.getElementById("pub-filters");
+    filtersToggle?.addEventListener("click", () => {
+      const open = filtersToggle.getAttribute("aria-expanded") === "true";
+      filtersToggle.setAttribute("aria-expanded", String(!open));
+      filtersPanel?.classList.toggle("hidden");
+    });
+
+    const filterBtns = [...document.querySelectorAll<HTMLElement>("[data-filter]")];
+    const areaBtns = [...document.querySelectorAll<HTMLElement>("[data-area]")];
+    const sortBtns = [...document.querySelectorAll<HTMLElement>("[data-sort]")];
+
+    // role filter key -> the li dataset flag it tests ("all" tests nothing)
+    const FLAG: Record<string, string> = {
+      mentee: "mentee",
+      pi: "piSenior",
+      collaboration: "collaboration",
+      openaccess: "openaccess",
+    };
+    let filter = "all";
+    let area = "all";
+    let sort = "date";
+
+    const num = (li: HTMLElement, k: string) => Number(li.dataset[k] ?? 0);
+
+    function fillCounts() {
+      for (const b of filterBtns) {
+        const f = b.dataset.filter!;
+        const c =
+          f === "all" ? items.length : items.filter((li) => li.dataset[FLAG[f]] === "true").length;
+        const span = b.querySelector("[data-count]");
+        if (span) span.textContent = `(${c})`;
+      }
+    }
+
+    function applySort() {
+      if (!list) return;
+      const arr = [...items].sort((a, b) =>
+        sort === "citations"
+          ? num(b, "citations") - num(a, "citations") || num(b, "year") - num(a, "year")
+          : num(b, "year") - num(a, "year"),
+      );
+      for (const li of arr) list.appendChild(li);
+    }
+
+    function applyFilter() {
+      const q = (search?.value ?? "").trim().toLowerCase();
+      let n = 0;
+      for (const li of items) {
+        const okFilter = filter === "all" || li.dataset[FLAG[filter]] === "true";
+        const okArea = area === "all" || (li.dataset.areas ?? "").split(" ").includes(area);
+        const okSearch = !q || (li.dataset.search ?? "").includes(q);
+        const show = okFilter && okArea && okSearch;
+        li.hidden = !show;
+        if (show) n++;
+      }
+      if (countEl) countEl.textContent = `${n} of ${items.length}`;
+      if (emptyEl) emptyEl.classList.toggle("hidden", n !== 0);
+    }
+
+    const setActive = (btns: HTMLElement[], active: HTMLElement) => {
+      for (const x of btns) {
+        if (x === active) x.setAttribute("data-active", "");
+        else x.removeAttribute("data-active");
+      }
+    };
+
+    for (const b of filterBtns)
+      b.addEventListener("click", () => {
+        filter = b.dataset.filter ?? "all";
+        setActive(filterBtns, b);
+        applyFilter();
+      });
+    for (const b of areaBtns)
+      b.addEventListener("click", () => {
+        area = b.dataset.area ?? "all";
+        setActive(areaBtns, b);
+        applyFilter();
+      });
+    for (const b of sortBtns)
+      b.addEventListener("click", () => {
+        sort = b.dataset.sort ?? "date";
+        setActive(sortBtns, b);
+        applySort();
+      });
+    search?.addEventListener("input", applyFilter);
+
+    // Deep link: /publications#<area-slug> pre-selects that area filter.
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
+    if (hash) {
+      const btn = areaBtns.find((b) => b.dataset.area === hash);
+      if (btn) {
+        area = hash;
+        setActive(areaBtns, btn);
+        filtersPanel?.classList.remove("hidden"); // reveal on mobile so the active chip shows
+        filtersToggle?.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    fillCounts();
+    applySort();
+    applyFilter();
+  </script>
+</BaseLayout>

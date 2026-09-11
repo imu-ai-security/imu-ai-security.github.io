@@ -1,0 +1,76 @@
+{
+  "researchGroups": [
+    { "title": "Research topics", "order": 1 },
+    { "title": "Approaches", "order": 2 }
+  ],
+  "filterGroups": [
+    { "title": "Topic", "order": 1 },
+    { "title": "Approach", "order": 2 },
+    { "title": "Type", "order": 3 }
+  ],
+  "areas": [
+    {
+      "slug": "adversarial-ml",
+      "label": "Adversarial machine learning",
+      "blurb": "Adversarial examples, robust training, and defenses for vision and language models.",
+      "researchGroup": "Research topics",
+      "filterGroup": "Topic",
+      "onResearch": true,
+      "order": 1
+    },
+    {
+      "slug": "privacy-preserving-ai",
+      "label": "Privacy-preserving AI",
+      "blurb": "Federated learning, differential privacy, and trustworthy data sharing.",
+      "researchGroup": "Research topics",
+      "filterGroup": "Topic",
+      "onResearch": true,
+      "order": 2
+    },
+    {
+      "slug": "secure-llm",
+      "label": "Secure and aligned LLMs",
+      "blurb": "Jailbreak resistance, prompt-injection detection, and controllable generation.",
+      "researchGroup": "Research topics",
+      "filterGroup": "Topic",
+      "onResearch": true,
+      "order": 3
+    },
+    {
+      "slug": "methods",
+      "label": "Security evaluation methods",
+      "blurb": "Reproducible security benchmarks, open tools, and curated datasets.",
+      "researchGroup": "Approaches",
+      "filterGroup": "Approach",
+      "onResearch": true,
+      "order": 4
+    },
+    {
+      "slug": "systems",
+      "label": "Trusted systems and applications",
+      "blurb": "Deploying safety algorithms across cloud, edge, and critical applications.",
+      "researchGroup": "Approaches",
+      "filterGroup": "Approach",
+      "onResearch": true,
+      "order": 5
+    },
+    {
+      "slug": "review",
+      "label": "Review",
+      "blurb": "",
+      "researchGroup": "",
+      "filterGroup": "Type",
+      "onResearch": false,
+      "order": 6
+    },
+    {
+      "slug": "letter",
+      "label": "Letter / commentary",
+      "blurb": "",
+      "researchGroup": "",
+      "filterGroup": "Type",
+      "onResearch": false,
+      "order": 7
+    }
+  ]
+}

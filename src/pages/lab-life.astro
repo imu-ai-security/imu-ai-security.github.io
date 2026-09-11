@@ -1,0 +1,73 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../components/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import GalleryGrid from "../components/GalleryGrid.astro";
+
+const items = (await getCollection("gallery")).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+const years = [...new Set(items.map((item) => item.data.date.getFullYear()))].sort((a, b) => b - a);
+---
+
+<BaseLayout
+  title="Lab Life"
+  description="Photos from life in the lab."
+>
+  <PageHeader
+    eyebrow="Beyond the bench"
+    title="Lab Life"
+    lead="Conferences, celebrations, and everyday life in the lab."
+  />
+  <div class="container-page py-12">
+    <div class="mb-8 flex flex-wrap items-center gap-3">
+      <label for="life-year" class="text-sm font-medium text-slate-700">Filter by year</label>
+      <select id="life-year" class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm">
+        <option value="all">All years</option>
+        {years.map((year) => <option value={year}>{year}</option>)}
+      </select>
+      <span id="life-count" class="text-sm text-slate-500"></span>
+    </div>
+    {
+      items.length > 0 ? (
+        <GalleryGrid items={items} />
+      ) : (
+        <div class="mx-auto flex max-w-md flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-14 text-center">
+          <svg class="h-10 w-10 text-primary-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <circle cx="8.5" cy="10" r="1.5" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4 17 4.5-4.5 3 3L15 12l5 5" />
+          </svg>
+          <p class="mt-4 font-serif text-lg text-slate-900">Photos coming soon</p>
+          <p class="mt-1 text-sm text-slate-600">
+            We're putting together snapshots of conferences, celebrations, and everyday life in the lab.
+          </p>
+          <a
+            href="/people"
+            class="mt-5 text-sm font-medium text-primary-700 hover:text-accent-600"
+          >
+            Meet the team &rarr;
+          </a>
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<script>
+  const select = document.getElementById("life-year") as HTMLSelectElement | null;
+  const cards = [...document.querySelectorAll<HTMLElement>("#gallery-grid [data-gallery-year]")];
+  const count = document.getElementById("life-count");
+  const apply = () => {
+    const value = select?.value ?? "all";
+    let shown = 0;
+    cards.forEach((card) => {
+      const show = value === "all" || card.dataset.galleryYear === value;
+      card.hidden = !show;
+      if (show) shown++;
+    });
+    if (count) count.textContent = `${shown} photos`;
+  };
+  select?.addEventListener("change", apply);
+  apply();
+</script>
