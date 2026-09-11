@@ -6,13 +6,13 @@
 #   base_url: https://<your-worker>.workers.dev
 backend:
   name: github
-  repo: baibaoo/baibaoo.github.io
+  repo: imu-ai-security/imu-ai-security.github.io
   branch: main
   base_url: https://baibaoo-cms-auth.mw04220603.workers.dev
 
-site_url: https://baibaoo.github.io
-display_url: https://baibaoo.github.io
-logo_url: https://baibaoo.github.io/favicon.svg
+site_url: https://imu-ai-security.github.io
+display_url: https://imu-ai-security.github.io
+logo_url: https://imu-ai-security.github.io/favicon.svg
 
 media_folder: src/assets/uploads
 public_folder: /src/assets/uploads
